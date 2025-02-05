@@ -17,5 +17,4 @@ create table waterTable(id bigint not null)
 
 select * from waterTable
 
-
-select top 10 * from customers_train
+select top 10 * from Silver.silver_customers--- customers_train
