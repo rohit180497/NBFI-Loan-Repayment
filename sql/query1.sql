@@ -15,6 +15,9 @@ add last_update BIGINT IDENTITY	(1,1)
 
 create table waterTable(id bigint not null)
 
-select * from waterTable
+select * from dbo.runs
 
 select top 10 * from Silver.silver_customers--- customers_train
+
+select * from dbo.customers_train as cust
+left join dbo.defaulters as def on cust.ID = def.ID
