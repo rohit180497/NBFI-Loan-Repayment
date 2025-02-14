@@ -6,7 +6,9 @@ import mlflow
 import joblib
 from mlflow.tracking import MlflowClient
 import json
+import threading
 from azureml.core import Workspace
+from db_manager import store_prediction
 
 # Ensure full output is displayed
 pd.set_option('display.max_columns', None)  # Show all columns
@@ -92,6 +94,8 @@ def predict():
     try:
         form_data = request.form
 
+        raw_input_json = json.dumps(request.form.to_dict(), default=str)
+
         # Convert form data to DataFrame
         input_data = pd.DataFrame([[
             int(form_data["ID_Years"]),
@@ -132,7 +136,7 @@ def predict():
                 input_data[col] = 0
 
         # Reorder columns to match model's expected order
-        input_data = input_data[expected_columns]
+        filter_data = input_data[expected_columns]
 
         # Convert numerical columns to float64
         numerical_columns = ['Score_Source_2', 'Score_Source_3', 'Employed_Years', 'Car_Owned',
@@ -140,8 +144,11 @@ def predict():
        'Phone_Change', 'Age_Years', 'Loan_Duration', 'House_Own']
         
         # Ensure transformation output is assigned correctly
-        scaled_values = scaler.transform(input_data[numerical_columns])  # Transform numerical columns
-        input_data[numerical_columns] = pd.DataFrame(scaled_values, columns=numerical_columns, index=input_data.index)
+        scaled_values = scaler.transform(filter_data[numerical_columns])  # Transform numerical columns
+        filter_data = filter_data.copy()
+        filter_data.loc[:, numerical_columns] = pd.DataFrame(scaled_values, columns=numerical_columns, index=filter_data.index)
+
+        # filter_data[numerical_columns] = pd.DataFrame(scaled_values, columns=numerical_columns, index=filter_data.index)
 
        
         # Convert categorical one-hot encoded columns to boolean
@@ -155,28 +162,70 @@ def predict():
             "Client_Housing_Type_Shared", "Client_Permanent_Match_Tag_Yes"
         ]
 
-        input_data[boolean_columns] = input_data[boolean_columns].astype(bool)
+        filter_data.loc[:, boolean_columns] = filter_data[boolean_columns].astype(bool)
+        print(filter_data.iloc[:,:])
+        # filter_data[boolean_columns] = filter_data[boolean_columns].astype(bool)
+        print(model)
 
         # Make prediction
+        # Make prediction
         if model is not None:
-            prediction_proba = model.predict_proba(input_data)[0]  # Extract the array            
-            # Convert to float & round to 2 decimal places
-            proba_default = round(float(prediction_proba[1]) * 100, 2)
-            proba_no_default = round(float(prediction_proba[0]) * 100, 2)
+            prediction_proba = model.predict_proba(filter_data)[0]  # Extract the array 
+            proba_default = round(float(prediction_proba[1]) * 100, 2)  # Probability of default
+            proba_no_default = round(float(prediction_proba[0]) * 100, 2)  # Probability of non-default
 
-                     
-            # Define message based on probability
+            # Define Message Based on Probability
             if proba_default > 50:
-                result = f"🚨 High Risk: {proba_default}% probability of loan default."
+                predicted_class = 1  # High Risk: Default
+                result_message = f"🚨 High Risk: {proba_default}% probability of loan default."
             else:
-                result = f"✅ Low Risk: {proba_no_default}% probability of timely repayment."
-        else:
-            result = "Error: Model not loaded"
+                predicted_class = 0  # Low Risk: No Default
+                result_message = f"✅ Low Risk: {proba_no_default}% probability of timely repayment."
 
-        return jsonify({"prediction": result})
+            print("Returning result:", result_message)  
+
+            # Return Response to Frontend First
+            response = jsonify({"prediction": result_message})
+
+            latest_run_id = None
+            try:
+                latest_run = mlflow.search_runs(order_by=["start_time desc"]).iloc[0]  # Fetch latest run
+                latest_run_id = latest_run["run_id"]
+            except Exception as e:
+                print(f"Error fetching MLflow run ID: {e}")
+
+            # Validate JSON Data Before Storing
+            try:
+                json_data = input_data.to_json(orient="records")
+                print("Storing JSON Data:", json_data)  # Debugging
+            except Exception as e:
+                print(f"Error converting input data to JSON: {e}")
+
+            # Store Prediction in Azure SQL using a Background Thread
+            def async_store():
+                try:
+                    store_prediction(
+                    run_id=latest_run_id,
+                    client_id=form_data["id"],  # Extract from request payload
+                    raw_input=raw_input_json,  # Raw input
+                    processed_input=filter_data.to_dict(orient="records"),  # Preprocessed before prediction
+                    prediction_prob=proba_default,
+                    predicted_class=predicted_class
+                )
+                    print("Prediction stored successfully in Azure SQL!")
+                except Exception as e:
+                    print(f" Failed to store prediction: {e}")
+
+            threading.Thread(target=async_store).start()
+
+            return response  # Ensure this runs before storing
+
+        else:
+            return jsonify({"prediction": "Error: Model not loaded"})
 
     except Exception as e:
         return jsonify({"error": str(e)})
+    
 
 if __name__ == "__main__":
     app.run(debug=True)

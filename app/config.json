@@ -1,5 +1,12 @@
 {
     "subscription_id": "7772aa07-d774-4b80-87e6-6979584ae183",
     "resource_group": "ALY-6020-FinalProject",
-    "workspace_name": "mlflow-workspace"
+    "workspace_name": "mlflow-workspace",
+    "sql": {
+        "server": "nbfi-loan-def-prediction.database.windows.net",
+        "database": "NBFIDB",
+        "username": "adminuser",
+        "password": "Rambo@12345",
+        "driver": "{ODBC Driver 17 for SQL Server}"
+    }
 }
