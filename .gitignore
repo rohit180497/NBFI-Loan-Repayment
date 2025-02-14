@@ -4,8 +4,10 @@ __pycache__/
 *$py.class
 config.json
 /app/config.json
+/app/.env
 # C extensions
 *.so
+.env
 .pptx
 .docx
 .docs

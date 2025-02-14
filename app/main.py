@@ -2,6 +2,7 @@
 from flask import Flask, render_template, request, jsonify
 import pickle
 import pandas as pd
+from dotenv import load_dotenv
 import mlflow
 import joblib
 from mlflow.tracking import MlflowClient
