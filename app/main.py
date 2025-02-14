@@ -2,34 +2,69 @@
 from flask import Flask, render_template, request, jsonify
 import pickle
 import pandas as pd
+import mlflow
+import joblib
+from mlflow.tracking import MlflowClient
+import json
+from azureml.core import Workspace
+
+
 # Ensure full output is displayed
 pd.set_option('display.max_columns', None)  # Show all columns
 pd.set_option('display.expand_frame_repr', False)  # Prevent column wrapping
 
 app = Flask(__name__)
 
-# Load trained model
-def load_model():
+
+
+# Load Azure ML Workspace from `config.json`
+with open("config.json", "r") as f:
+    config = json.load(f)
+
+ws = Workspace.get(
+    name=config["workspace_name"],
+    subscription_id=config["subscription_id"],
+    resource_group=config["resource_group"]
+)
+
+# Set MLflow to use Azure Tracking & Model Registry
+mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+mlflow.set_registry_uri(ws.get_mlflow_tracking_uri())
+
+print("MLflow is now connected to Azure ML Workspace:", config["workspace_name"])
+
+# Define Model Name
+MODEL_NAME = "NBFI-loan-defaulter-prediction-logistic-regression"
+
+#Fetch Latest Model Version
+latest_model = client.get_latest_versions(name=MODEL_NAME, stages=["Production"])[0]
+latest_run_id = latest_model.run_id  # Dynamically get latest Run ID
+
+# Function to Load Model from MLflow
+def load_model():   
     try:
-        with open("model/logistic_model.pkl", "rb") as file:
-            model = pickle.load(file)
+        model_uri = f"models:/{MODEL_NAME}/latest"
+        model = mlflow.sklearn.load_model(model_uri)
+        print("Model loaded successfully from Azure MLflow!")
         return model
     except Exception as e:
-        print(f"Error loading model: {e}")
+        print(f"Error loading model from MLflow: {e}")
         return None
-    
-# Load scaler
+
+# Function to Load Scaler from MLflow Artifacts
 def load_scaler():
     try:
-        scaler = pd.read_pickle("model/scaler.pkl")
+        scaler_path = client.download_artifacts(latest_run_id, "Logistic_regression/Logistic_regression_scaler.pkl")
+        scaler = joblib.load(scaler_path)
+        print("Scaler loaded successfully from Azure MLflow!")
         return scaler
     except Exception as e:
-        print(f"Error loading scaler: {e}")
+        print(f"Error loading scaler from MLflow: {e}")
         return None
 
+# Load Model & Scaler
 model = load_model()
 scaler = load_scaler()
-
 # Define expected columns for the model after encoding
 
 expected_columns = [
