@@ -8,7 +8,6 @@ from mlflow.tracking import MlflowClient
 import json
 from azureml.core import Workspace
 
-
 # Ensure full output is displayed
 pd.set_option('display.max_columns', None)  # Show all columns
 pd.set_option('display.expand_frame_repr', False)  # Prevent column wrapping
@@ -16,34 +15,37 @@ pd.set_option('display.expand_frame_repr', False)  # Prevent column wrapping
 app = Flask(__name__)
 
 
+# Connect to Azure ML Workspace
+ws = Workspace.from_config()  # This reads from config.json
 
-# Load Azure ML Workspace from `config.json`
-with open("config.json", "r") as f:
-    config = json.load(f)
-
-ws = Workspace.get(
-    name=config["workspace_name"],
-    subscription_id=config["subscription_id"],
-    resource_group=config["resource_group"]
-)
-
-# Set MLflow to use Azure Tracking & Model Registry
+# Set MLflow Tracking URI to Azure ML Workspace
 mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
-mlflow.set_registry_uri(ws.get_mlflow_tracking_uri())
 
-print("MLflow is now connected to Azure ML Workspace:", config["workspace_name"])
+print("MLflow Connected to Azure ML!")
+
+
+# Initialize MLflow Client
+client = MlflowClient()
 
 # Define Model Name
 MODEL_NAME = "NBFI-loan-defaulter-prediction-logistic-regression"
 
 #Fetch Latest Model Version
-latest_model = client.get_latest_versions(name=MODEL_NAME, stages=["Production"])[0]
-latest_run_id = latest_model.run_id  # Dynamically get latest Run ID
+latest_model_versions = client.search_model_versions(f"name='{MODEL_NAME}'")
+
+if not latest_model_versions:
+    raise ValueError(f"No registered model found for {MODEL_NAME}")
+
+#Get latest version dynamically
+latest_model_version = max([int(m.version) for m in latest_model_versions])
+latest_run_id = [m.run_id for m in latest_model_versions if int(m.version) == latest_model_version][0]
+
+print(f"Latest Model Version: {latest_model_version} | Run ID: {latest_run_id}")
 
 # Function to Load Model from MLflow
 def load_model():   
     try:
-        model_uri = f"models:/{MODEL_NAME}/latest"
+        model_uri = f"models:/{MODEL_NAME}/{latest_model_version}"
         model = mlflow.sklearn.load_model(model_uri)
         print("Model loaded successfully from Azure MLflow!")
         return model
@@ -61,7 +63,7 @@ def load_scaler():
     except Exception as e:
         print(f"Error loading scaler from MLflow: {e}")
         return None
-
+    
 # Load Model & Scaler
 model = load_model()
 scaler = load_scaler()
