@@ -16,7 +16,6 @@ pd.set_option('display.expand_frame_repr', False)  # Prevent column wrapping
 
 app = Flask(__name__)
 
-
 # Connect to Azure ML Workspace
 ws = Workspace.from_config()  # This reads from config.json
 
