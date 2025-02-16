@@ -6,39 +6,45 @@ from dotenv import load_dotenv
 import mlflow
 import joblib
 from mlflow.tracking import MlflowClient
-import json
+import os
 import threading
 from azureml.core import Workspace
 from db_manager import store_prediction
+import json
 
 # Ensure full output is displayed
 pd.set_option('display.max_columns', None)  # Show all columns
 pd.set_option('display.expand_frame_repr', False)  # Prevent column wrapping
 
+#  Load .env file
+load_dotenv()
+
 app = Flask(__name__)
 
-# Connect to Azure ML Workspace
-ws = Workspace.from_config()  # This reads from config.json
+# Load Azure ML Workspace from Environment Variables
+ws = Workspace.get(
+    name=os.getenv("WORKSPACE_NAME"),
+    subscription_id=os.getenv("SUBSCRIPTION_ID"),
+    resource_group=os.getenv("RESOURCE_GROUP")
+)
 
-# Set MLflow Tracking URI to Azure ML Workspace
+#  Set MLflow Tracking URI to Azure ML Workspace
 mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
 
 print("MLflow Connected to Azure ML!")
 
-
-# Initialize MLflow Client
+#  Initialize MLflow Client
 client = MlflowClient()
 
-# Define Model Name
-MODEL_NAME = "NBFI-loan-defaulter-prediction-logistic-regression"
+#  Define Model Name from .env
+MODEL_NAME = os.getenv("MODEL_NAME", "NBFI-loan-defaulter-prediction-logistic-regression")
 
-#Fetch Latest Model Version
+# Fetch Latest Model Version Dynamically
 latest_model_versions = client.search_model_versions(f"name='{MODEL_NAME}'")
 
 if not latest_model_versions:
     raise ValueError(f"No registered model found for {MODEL_NAME}")
 
-#Get latest version dynamically
 latest_model_version = max([int(m.version) for m in latest_model_versions])
 latest_run_id = [m.run_id for m in latest_model_versions if int(m.version) == latest_model_version][0]
 
@@ -47,8 +53,8 @@ print(f"Latest Model Version: {latest_model_version} | Run ID: {latest_run_id}")
 # Function to Load Model from MLflow
 def load_model():   
     try:
-        model_uri = f"models:/{MODEL_NAME}/{latest_model_version}"
-        model = mlflow.sklearn.load_model(model_uri)
+        model_path = client.download_artifacts(latest_run_id, "Logistic_regression/Logistic_regression.pkl")
+        model = joblib.load(model_path)
         print("Model loaded successfully from Azure MLflow!")
         return model
     except Exception as e:
@@ -58,7 +64,10 @@ def load_model():
 # Function to Load Scaler from MLflow Artifacts
 def load_scaler():
     try:
+        # Ensure this matches the actual path in MLflow artifacts
         scaler_path = client.download_artifacts(latest_run_id, "Logistic_regression/Logistic_regression_scaler.pkl")
+        
+        # Load the scaler
         scaler = joblib.load(scaler_path)
         print("Scaler loaded successfully from Azure MLflow!")
         return scaler
@@ -69,6 +78,10 @@ def load_scaler():
 # Load Model & Scaler
 model = load_model()
 scaler = load_scaler()
+
+# Define expected columns for the model after encoding
+
+
 # Define expected columns for the model after encoding
 
 expected_columns = [
