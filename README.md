@@ -11,7 +11,7 @@ This project aims to build an end-to-end loan default prediction system for a No
 By implementing MLOps best practices, this solution enhances model reliability, scalability, and reproducibility—making it ready for real-world deployment in financial services.
 
 ## High Level Architecture
-![](assets/architecture.gif)
+![](assets/architecture.png)
 
 ## Project Demo
 ![](assets/loan-default-prediction-azure-demo.gif)
