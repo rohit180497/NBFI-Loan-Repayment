@@ -1,7 +1,14 @@
 # NBFI Loan Default Prediction - End-to-End MLOps Project
 
-## 📌 Objective
-This project aims to build an **end-to-end loan default prediction system** for a **Non-Banking Financial Institution (NBFI)**. The system is designed to **ingest, clean, process, and predict loan default probabilities** while ensuring **model deployment, monitoring, and automated CI/CD**.
+The financial sector is rapidly evolving, and Non-Banking Financial Institutions (NBFIs) are at the forefront of innovation. As digital lending grows, accurate loan default prediction has become critical for risk management and financial stability.
+
+This repository presents an End-to-End MLOps Architecture for Loan Default Prediction designed to automate the entire machine learning lifecycle—from data ingestion to model deployment and monitoring—leveraging the power of Azure Cloud.
+
+## Project Overview
+
+This project aims to build an end-to-end loan default prediction system for a Non-Banking Financial Institution (NBFI). The system is designed to ingest, clean, process, and predict loan default probabilities while ensuring model deployment, monitoring, and automated CI/CD.
+
+By implementing MLOps best practices, this solution enhances model reliability, scalability, and reproducibility—making it ready for real-world deployment in financial services.
 
 ## High Level Architecture
 ![](assets/architecture.gif)
@@ -63,6 +70,7 @@ The project follows the **Medallion Architecture** implemented using **Azure SQL
   - `predicted_class`
   - `prediction_timestamp`
 
+![](assets/predictions.png)
 ## 📡 Monitoring & Logging
 - **Azure Monitor & Log Analytics** track API performance and error logs.
 - **Application Insights** helps in real-time monitoring of API health.
@@ -91,6 +99,9 @@ The **CI/CD pipeline automates model deployment** when new code is pushed to Git
 | **Azure Kubernetes Service (AKS)** | Deploys and scales the application |
 | **Azure Monitor** | Logs API requests, errors, and performance metrics |
 | **GitHub Actions** | Automates CI/CD workflow |
+![](assets/resource-groups.png)
+![](assets/aks-monitor.png)
+![](assets/amls-jobs.png)
 
 ## 📌 Next Steps & Future Enhancements
 - Implement **Model Retraining Pipeline** with **AutoML** in Azure ML.
