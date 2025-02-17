@@ -247,5 +247,5 @@ kubectl get hpa
 - **Add a Custom Domain** using **Azure DNS**
 - **Set Up HTTPS** with **Azure Application Gateway**
 
-🚀 **Congrats on the successful AKS deployment!** Let me know if you need further improvements. 🎯
+🚀 **Congrats on the successful AKS deployment!** 🎯
 

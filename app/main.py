@@ -16,8 +16,8 @@ from db_manager import store_prediction
 import json
 
 # Ensure full output is displayed
-pd.set_option('display.max_columns', None)  # Show all columns
-pd.set_option('display.expand_frame_repr', False)  # Prevent column wrapping
+pd.set_option('display.max_columns', None)  
+pd.set_option('display.expand_frame_repr', False)  
 
 #  Load .env file
 load_dotenv()
@@ -92,9 +92,6 @@ def load_scaler():
 # Load Model & Scaler
 model = load_model()
 scaler = load_scaler()
-
-# Define expected columns for the model after encoding
-
 
 # Define expected columns for the model after encoding
 
@@ -190,8 +187,6 @@ def predict():
         ]
 
         filter_data.loc[:, boolean_columns] = filter_data[boolean_columns].astype(bool)
-        # print(filter_data.iloc[:,:])
-        # filter_data[boolean_columns] = filter_data[boolean_columns].astype(bool)
 
         # Make prediction
         if model is not None:
