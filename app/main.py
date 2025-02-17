@@ -1,5 +1,6 @@
 
 from flask import Flask, render_template, request, jsonify
+from azureml.core.authentication import ServicePrincipalAuthentication
 import pickle
 import pandas as pd
 from dotenv import load_dotenv
@@ -21,11 +22,21 @@ load_dotenv()
 
 app = Flask(__name__)
 
+
+
+# Authenticate using Service Principal
+sp_auth = ServicePrincipalAuthentication(
+    tenant_id=os.getenv("AZURE_TENANT_ID"),
+    service_principal_id=os.getenv("AZURE_CLIENT_ID"),
+    service_principal_password=os.getenv("AZURE_CLIENT_SECRET")
+)
+
 # Load Azure ML Workspace from Environment Variables
 ws = Workspace.get(
     name=os.getenv("WORKSPACE_NAME"),
     subscription_id=os.getenv("SUBSCRIPTION_ID"),
-    resource_group=os.getenv("RESOURCE_GROUP")
+    resource_group=os.getenv("RESOURCE_GROUP"),
+    auth=sp_auth
 )
 
 #  Set MLflow Tracking URI to Azure ML Workspace
