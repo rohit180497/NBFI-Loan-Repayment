@@ -64,7 +64,7 @@ jobs:
           kubectl apply -f deployment/k8s_deployment.yaml
 ```
 
-### **2️⃣ Kubernetes Deployment File (`deployment/k8s_deployment.yaml`)**
+### **2️⃣ Kubernetes Deployment File (`deployment/deployment.yaml`)**
 Defines **how the app runs on AKS**.
 ```yaml
 apiVersion: apps/v1
