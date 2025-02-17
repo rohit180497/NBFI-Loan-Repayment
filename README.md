@@ -6,6 +6,9 @@ This project aims to build an **end-to-end loan default prediction system** for 
 ## High Level Architecture
 ![](assets/architecture.gif)
 
+## Project Demo
+![](assets/loan-default-prediction-azure-demo.gif)
+
 ## 🏗️ Architecture Overview
 The project follows the **Medallion Architecture** implemented using **Azure SQL Database** for structured data processing. The flow involves **three main data layers**:
 
