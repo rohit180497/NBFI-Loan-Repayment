@@ -5,7 +5,6 @@ __pycache__/
 config.json
 /app/config.json
 /app/.env
-/assets
 *.mp4
 # C extensions
 *.so
