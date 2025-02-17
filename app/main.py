@@ -2,6 +2,7 @@
 from flask import Flask, render_template, request, jsonify
 from azureml.core import Workspace
 from azure.identity import DefaultAzureCredential
+from azureml.core.authentication import ServicePrincipalAuthentication
 import pickle
 import pandas as pd
 from dotenv import load_dotenv
@@ -24,21 +25,21 @@ load_dotenv()
 app = Flask(__name__)
 
 #Using Managed Identity Instead of Service Principal
-credential = DefaultAzureCredential()
+# credential = DefaultAzureCredential()
 
 # Authenticate using Service Principal
-# sp_auth = ServicePrincipalAuthentication(
-#     tenant_id=os.getenv("AZURE_TENANT_ID"),
-#     service_principal_id=os.getenv("AZURE_CLIENT_ID"),
-#     service_principal_password=os.getenv("AZURE_CLIENT_SECRET")
-# )
+sp_auth = ServicePrincipalAuthentication(
+    tenant_id=os.getenv("AZURE_TENANT_ID"),
+    service_principal_id=os.getenv("AZURE_CLIENT_ID"),
+    service_principal_password=os.getenv("AZURE_CLIENT_SECRET")
+)
 
 # Load Azure ML Workspace from Environment Variables
 ws = Workspace.get(
     name=os.getenv("WORKSPACE_NAME"),
     subscription_id=os.getenv("SUBSCRIPTION_ID"),
     resource_group=os.getenv("RESOURCE_GROUP"),
-    auth=credential
+    auth=sp_auth
 )
 
 #  Set MLflow Tracking URI to Azure ML Workspace
@@ -189,11 +190,9 @@ def predict():
         ]
 
         filter_data.loc[:, boolean_columns] = filter_data[boolean_columns].astype(bool)
-        print(filter_data.iloc[:,:])
+        # print(filter_data.iloc[:,:])
         # filter_data[boolean_columns] = filter_data[boolean_columns].astype(bool)
-        print(model)
 
-        # Make prediction
         # Make prediction
         if model is not None:
             prediction_proba = model.predict_proba(filter_data)[0]  # Extract the array 
