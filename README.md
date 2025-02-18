@@ -4,10 +4,6 @@ The financial sector is rapidly evolving, and Non-Banking Financial Institutions
 
 This repository presents an End-to-End MLOps Architecture for Loan Default Prediction designed to automate the entire machine learning lifecycle—from data ingestion to model deployment and monitoring—leveraging the power of Azure Cloud.
 
-## Project Overview
-
-This project aims to build an end-to-end loan default prediction system for a Non-Banking Financial Institution (NBFI). The system is designed to ingest, clean, process, and predict loan default probabilities while ensuring model deployment, monitoring, and automated CI/CD.
-
 By implementing MLOps best practices, this solution enhances model reliability, scalability, and reproducibility—making it ready for real-world deployment in financial services.
 
 ## High Level Architecture
